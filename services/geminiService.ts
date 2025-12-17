@@ -35,8 +35,14 @@ Additional Task:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
+  // Validate API Key availability
+  const apiKey = process.env.API_KEY;
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+    throw new Error("API Key is missing. Please check your environment variables or Netlify configuration.");
+  }
+
   // Always use process.env.API_KEY directly as per guidelines.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   
@@ -94,16 +100,24 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
 
     const responseText = response.text;
     if (!responseText) {
-      throw new Error("Empty response from AI");
+      throw new Error("Received empty response from the AI model.");
     }
 
     // Parse JSON
-    const parsed = JSON.parse(responseText);
-    
-    return parsed as HookResponse;
+    try {
+        const parsed = JSON.parse(responseText);
+        return parsed as HookResponse;
+    } catch (e) {
+        console.error("Failed to parse AI response:", responseText);
+        throw new Error("Failed to parse the response from AI. Please try again.");
+    }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating hooks:", error);
-    throw error;
+    // Pass through specific error messages
+    if (error.message.includes("API Key")) {
+        throw error;
+    }
+    throw new Error(error.message || "An unknown error occurred while contacting the AI.");
   }
 };

@@ -27,11 +27,12 @@ export default function App() {
           setStrategy(result.strategy);
         }
       } else {
-        setError("No hooks were generated. Please try a different topic.");
+        setError("No hooks were generated. The AI response was empty.");
       }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to generate hooks. Please try again later.");
+    } catch (err: any) {
+      console.error("Generation error:", err);
+      // Display the actual error message to help debug API key issues
+      setError(err.message || "Failed to generate hooks. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -52,9 +53,15 @@ export default function App() {
 
           {/* Error Message */}
           {error && (
-            <div className="flex items-center gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 animate-in fade-in slide-in-from-top-4">
-              <AlertCircle className="w-5 h-5 flex-shrink-0" />
-              <p>{error}</p>
+            <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 animate-in fade-in slide-in-from-top-4">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-medium">Generation Failed</p>
+                <p className="text-sm opacity-90 mt-1">{error}</p>
+                <p className="text-xs text-red-300/50 mt-2">
+                  Tip: Ensure your API Key is valid and the selected model is supported.
+                </p>
+              </div>
             </div>
           )}
 
