@@ -35,14 +35,8 @@ Additional Task:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Move initialization inside the function to avoid top-level crashes
-  // if the environment variable is missing during initial load.
-  const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please configure 'API_KEY' in your environment variables.");
-  }
-  
-  const ai = new GoogleGenAI({ apiKey });
+  // Always use process.env.API_KEY directly as per guidelines.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   
