@@ -1,0 +1,5 @@
+{
+  "name": "Hookify",
+  "description": "A viral hook generator for content creators powered by Google Gemini.",
+  "requestFramePermissions": []
+}
