@@ -3,72 +3,42 @@ import { FormData, HookResponse, GeneratorMode } from '../types';
 
 const SYSTEM_INSTRUCTION = `
 You are Hookify, a free AI Hook Generator designed to help creators stop the scroll instantly.
-
-You are an expert viral copywriter and social media strategist who understands how attention works on social platforms.
+You are an expert viral copywriter and social media strategist.
 
 Your task is to generate high-performing, scroll-stopping hooks that grab attention within the first 2 seconds.
 
 RULES:
-- Hooks must sound human, confident, and natural
-- Avoid generic or overused phrases
-- Optimize wording strictly for the selected platform
-- Each hook must be ONE sentence only
-- Use emotional triggers like curiosity, pain, fear, desire, or surprise
-- No hashtags
-- No explanations
-- No titles or headings
-- Emojis only if Emoji Mode is ON and platform is Instagram or TikTok
-- If CTA Mode is ON, append a short natural CTA (e.g., “watch till end”, “save this”)
-- Respect hook length setting:
-  - Short: 5–7 words
-  - Medium: 8–14 words
-  - Long: Story-style but concise
-- Append " - Created by Hookify" to the end of every single hook string.
+- Hooks must sound human, confident, and natural.
+- Each hook must be ONE sentence only.
+- Respect hook length setting: Short (5-7 words), Medium (8-14 words), Long (Story-style).
+- Emojis only if Emoji Mode is ON.
+- Append " - Created by Hookify" to the end of every hook.
 
-OUTPUT REQUIREMENTS:
-- Generate exactly 10 hooks (or 5 if improving)
-- Mix creativity while respecting the selected hook style
-
-Additional Task:
-- You must also provide a brief "Video Strategy" to help the user film this content.
-- This strategy should include a visual hook idea, pacing suggestion, audio suggestion, and a caption tip.
+OUTPUT:
+- Return valid JSON matching the schema provided.
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Validate API Key availability
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
-    throw new Error("API Key is missing. Please check your environment variables or Netlify configuration.");
-  }
-
-  // Always use process.env.API_KEY directly as per guidelines.
-  const ai = new GoogleGenAI({ apiKey: apiKey });
+  // Guidelines: Always use new GoogleGenAI({apiKey: process.env.API_KEY});
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
-  
   const prompt = `
     Mode: ${data.mode}
     Topic: ${data.topic}
-    ${isImprove ? `User Hook to Improve: "${data.userHook}"` : ''}
+    ${isImprove ? `Improve this hook: "${data.userHook}"` : 'Generate viral hooks for this topic.'}
     Platform: ${data.platform}
-    Audience: ${data.audience || 'General Audience'}
     Tone: ${data.tone}
-    Hook Style: ${data.hookStyle}
-    Hook Length: ${data.hookLength}
-    Emoji Mode: ${data.emojiMode ? 'On' : 'Off'}
-    CTA Mode: ${data.ctaMode ? 'On' : 'Off'}
+    Style: ${data.hookStyle}
+    Length: ${data.hookLength}
+    Emojis: ${data.emojiMode}
+    CTA: ${data.ctaMode}
     Language: ${data.language}
-
-    ${isImprove 
-      ? 'Rewrite the provided hook to be more scroll-stopping. Generate 5 improved versions. Preserve the original idea but increase impact.' 
-      : 'Generate 10 viral hooks for this topic.'}
-      
-    Also provide a video strategy.
   `;
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -79,16 +49,14 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
             hooks: {
               type: Type.ARRAY,
               items: { type: Type.STRING },
-              description: "The list of viral hooks",
             },
             strategy: {
               type: Type.OBJECT,
-              description: "Strategic advice for creating the video/reel",
               properties: {
-                visualHook: { type: Type.STRING, description: "Description of the first 3 seconds visually" },
-                pacing: { type: Type.STRING, description: "Suggested speed and editing style" },
-                audioSuggestion: { type: Type.STRING, description: "Type of audio (e.g. trending song, voiceover, ASMR)" },
-                captionTip: { type: Type.STRING, description: "One tip for the description/caption" }
+                visualHook: { type: Type.STRING },
+                pacing: { type: Type.STRING },
+                audioSuggestion: { type: Type.STRING },
+                captionTip: { type: Type.STRING }
               },
               required: ["visualHook", "pacing", "audioSuggestion", "captionTip"]
             }
@@ -98,26 +66,19 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
       },
     });
 
-    const responseText = response.text;
-    if (!responseText) {
-      throw new Error("Received empty response from the AI model.");
-    }
-
-    // Parse JSON
-    try {
-        const parsed = JSON.parse(responseText);
-        return parsed as HookResponse;
-    } catch (e) {
-        console.error("Failed to parse AI response:", responseText);
-        throw new Error("Failed to parse the response from AI. Please try again.");
-    }
+    // Guidelines: Use .text property (not a method call)
+    const text = response.text;
+    if (!text) throw new Error("Empty response from AI.");
+    return JSON.parse(text) as HookResponse;
 
   } catch (error: any) {
-    console.error("Error generating hooks:", error);
-    // Pass through specific error messages
-    if (error.message.includes("API Key")) {
-        throw error;
+    console.error("Gemini API Error:", error);
+    
+    // Check if it's the specific 503 Overloaded error
+    if (error.message?.includes("503") || error.message?.includes("overloaded")) {
+      throw new Error("Google's servers are currently busy (503 Overloaded). Please wait 10 seconds and try clicking 'Generate' again.");
     }
-    throw new Error(error.message || "An unknown error occurred while contacting the AI.");
+    
+    throw new Error(error.message || "Something went wrong with the generation.");
   }
 };

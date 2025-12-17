@@ -5,7 +5,7 @@ import { HookList } from './components/HookList';
 import { StrategyCard } from './components/StrategyCard';
 import { generateHooks } from './services/geminiService';
 import { FormData, HookResponse, VideoStrategy } from './types';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, RefreshCcw } from 'lucide-react';
 
 export default function App() {
   const [hooks, setHooks] = useState<string[]>([]);
@@ -23,16 +23,20 @@ export default function App() {
       const result: HookResponse = await generateHooks(data);
       if (result.hooks && result.hooks.length > 0) {
         setHooks(result.hooks);
-        if (result.strategy) {
-          setStrategy(result.strategy);
-        }
+        setStrategy(result.strategy);
       } else {
-        setError("No hooks were generated. The AI response was empty.");
+        setError("No hooks were generated. Please try a different topic.");
       }
     } catch (err: any) {
-      console.error("Generation error:", err);
-      // Display the actual error message to help debug API key issues
-      setError(err.message || "Failed to generate hooks. Please check your connection and try again.");
+      // Clean up technical error messages
+      let message = err.message;
+      if (message.startsWith('{')) {
+        try {
+          const parsed = JSON.parse(message);
+          message = parsed.error?.message || "Server Busy. Please try again.";
+        } catch(e) { /* ignore */ }
+      }
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -45,27 +49,30 @@ export default function App() {
         <Header />
 
         <main className="mt-12 space-y-12">
-          {/* Input Section */}
           <section className="relative z-10">
             <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full -z-10" />
             <HookForm onGenerate={handleGenerate} isLoading={loading} />
           </section>
 
-          {/* Error Message */}
           {error && (
-            <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-200 animate-in fade-in slide-in-from-top-4">
-              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-4 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 animate-in fade-in slide-in-from-top-4">
+              <div className="p-2 bg-red-500/20 rounded-lg">
+                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              </div>
               <div className="flex-1">
-                <p className="font-medium">Generation Failed</p>
-                <p className="text-sm opacity-90 mt-1">{error}</p>
-                <p className="text-xs text-red-300/50 mt-2">
-                  Tip: Ensure your API Key is valid and the selected model is supported.
-                </p>
+                <p className="font-bold text-lg">Server Busy</p>
+                <p className="text-slate-300 mt-1">{error}</p>
+                <button 
+                  onClick={() => window.location.reload()}
+                  className="mt-4 flex items-center gap-2 text-sm font-semibold text-white bg-red-500/20 hover:bg-red-500/30 px-4 py-2 rounded-lg transition-colors"
+                >
+                  <RefreshCcw className="w-4 h-4" />
+                  Refresh App
+                </button>
               </div>
             </div>
           )}
 
-          {/* Results Section */}
           <section className="space-y-8">
             {loading && (
               <div className="text-center py-12 space-y-4">
@@ -76,25 +83,18 @@ export default function App() {
                   </div>
                 </div>
                 <h3 className="text-xl font-medium text-indigo-200">Crafting viral hooks...</h3>
-                <p className="text-slate-400">Analyzing trends and optimizing for {loading ? 'maximum engagement' : '...'} </p>
               </div>
             )}
 
             {!loading && hooks.length > 0 && (
                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-8">
-                  {/* Strategy Card */}
                   {strategy && <StrategyCard strategy={strategy} />}
-
-                  {/* Hook List */}
                   <div>
                     <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-indigo-400" />
                         Generated Hooks
                       </h2>
-                      <span className="text-sm text-slate-400 bg-slate-900/50 px-3 py-1 rounded-full border border-slate-800">
-                        {hooks.length} variations
-                      </span>
                     </div>
                     <HookList hooks={hooks} />
                   </div>
@@ -103,14 +103,14 @@ export default function App() {
             
             {!loading && hooks.length === 0 && !error && (
               <div className="text-center py-20 opacity-50">
-                <p className="text-slate-500">Enter a topic above to generate scroll-stopping hooks and a video strategy.</p>
+                <p className="text-slate-500 italic">"The hook is the most important part of your video." — Hookify</p>
               </div>
             )}
           </section>
         </main>
 
         <footer className="mt-20 border-t border-slate-800 pt-8 text-center text-slate-500 text-sm">
-          <p>© {new Date().getFullYear()} Hookify</p>
+          <p>© {new Date().getFullYear()} Hookify • Stop the scroll.</p>
         </footer>
       </div>
     </div>
