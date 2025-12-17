@@ -1,8 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { FormData, HookResponse, GeneratorMode } from '../types';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 const SYSTEM_INSTRUCTION = `
 You are Hookify, a free AI Hook Generator designed to help creators stop the scroll instantly.
 
@@ -37,6 +35,15 @@ Additional Task:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
+  // Move initialization inside the function to avoid top-level crashes
+  // if the environment variable is missing during initial load.
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please configure 'API_KEY' in your environment variables.");
+  }
+  
+  const ai = new GoogleGenAI({ apiKey });
+
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   
   const prompt = `
