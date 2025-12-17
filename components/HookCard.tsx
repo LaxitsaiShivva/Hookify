@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Twitter, Share2 } from 'lucide-react';
+import { Copy, Check, Share2 } from 'lucide-react';
 
 interface HookCardProps {
   text: string;
@@ -9,11 +9,6 @@ interface HookCardProps {
 export const HookCard: React.FC<HookCardProps> = ({ text, index }) => {
   const [copied, setCopied] = useState(false);
 
-  // Clean the text: remove "Created by Hookify" for the display copy if desired, 
-  // but requirements say it should be IN the hook.
-  // We will display it as is, but maybe style the branding part differently? 
-  // For now, simple text display.
-  
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
     setCopied(true);
