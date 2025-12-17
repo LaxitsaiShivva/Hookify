@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check, Share2 } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 
 interface HookCardProps {
   text: string;
