@@ -25,17 +25,16 @@ export default function App() {
         setHooks(result.hooks);
         setStrategy(result.strategy);
       } else {
-        setError("No hooks were generated. Please try a different topic.");
+        setError("AI returned no results. Try making your topic more specific.");
       }
     } catch (err: any) {
-      // Clean up technical error messages
-      let message = err.message;
-      if (message.startsWith('{')) {
-        try {
-          const parsed = JSON.parse(message);
-          message = parsed.error?.message || "Server Busy. Please try again.";
-        } catch(e) { /* ignore */ }
+      let message = err.message || "An unexpected error occurred.";
+      
+      // Handle the common "Overloaded" error gracefully
+      if (message.includes("503") || message.toLowerCase().includes("overloaded")) {
+        message = "Google's AI is currently very busy. Please wait 10 seconds and try clicking Generate again.";
       }
+      
       setError(message);
     } finally {
       setLoading(false);
@@ -56,19 +55,21 @@ export default function App() {
 
           {error && (
             <div className="flex items-start gap-4 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 animate-in fade-in slide-in-from-top-4">
-              <div className="p-2 bg-red-500/20 rounded-lg">
-                <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div className="p-2 bg-red-500/20 rounded-lg shrink-0">
+                <AlertCircle className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="font-bold text-lg">Server Busy</p>
+                <p className="font-bold text-lg">Wait a moment...</p>
                 <p className="text-slate-300 mt-1">{error}</p>
-                <button 
-                  onClick={() => window.location.reload()}
-                  className="mt-4 flex items-center gap-2 text-sm font-semibold text-white bg-red-500/20 hover:bg-red-500/30 px-4 py-2 rounded-lg transition-colors"
-                >
-                  <RefreshCcw className="w-4 h-4" />
-                  Refresh App
-                </button>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  <button 
+                    onClick={() => window.location.reload()}
+                    className="flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg transition-colors"
+                  >
+                    <RefreshCcw className="w-4 h-4" />
+                    Refresh Page
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -83,6 +84,7 @@ export default function App() {
                   </div>
                 </div>
                 <h3 className="text-xl font-medium text-indigo-200">Crafting viral hooks...</h3>
+                <p className="text-slate-500 text-sm">This usually takes about 3-5 seconds</p>
               </div>
             )}
 
