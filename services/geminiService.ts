@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { FormData, HookResponse, GeneratorMode } from '../types';
 
@@ -19,8 +20,9 @@ OUTPUT:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Guidelines: Always use new GoogleGenAI({apiKey: process.env.API_KEY});
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Fixed: Initializing GoogleGenAI directly with process.env.API_KEY as per the world-class guidelines.
+  // We assume process.env.API_KEY is pre-configured and valid.
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   const prompt = `
@@ -37,8 +39,9 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
   `;
 
   try {
+    // Fixed: Using 'gemini-3-pro-preview' for creative copywriting and complex strategy reasoning.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-3-pro-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -66,7 +69,7 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
       },
     });
 
-    // Guidelines: Use .text property (not a method call)
+    // Fixed: Accessing response.text directly (not a function call) as per the SDK documentation.
     const text = response.text;
     if (!text) throw new Error("Empty response from AI.");
     return JSON.parse(text) as HookResponse;
@@ -74,9 +77,9 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     
-    // Check if it's the specific 503 Overloaded error
+    // Graceful error handling for service availability issues.
     if (error.message?.includes("503") || error.message?.includes("overloaded")) {
-      throw new Error("Google's servers are currently busy (503 Overloaded). Please wait 10 seconds and try clicking 'Generate' again.");
+      throw new Error("Google's servers are currently busy. Please wait 10 seconds and try again.");
     }
     
     throw new Error(error.message || "Something went wrong with the generation.");
