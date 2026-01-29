@@ -12,18 +12,13 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Error Boundary to catch crashes and show a helpful message
-// Fixed: Using React.Component explicitly to ensure proper inheritance and recognition of 'state' and 'props'
+// Fixed: Using property initializers and explicit React.Component inheritance to resolve state/props access errors
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Explicitly initialize state to resolve potential property existence errors
-  public state: ErrorBoundaryState = {
+  // Using property initializer for state
+  state: ErrorBoundaryState = {
     hasError: false,
     error: null
   };
-
-  constructor(props: ErrorBoundaryProps) {
-    super(props);
-  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -34,19 +29,16 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
-    // Correctly using inherited 'state'
+    // Correctly accessing state and props from the Component instance
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-2xl">
             <h1 className="text-3xl font-bold text-red-400 mb-4">Something went wrong</h1>
-            <p className="text-slate-300 mb-6">The application crashed. Here is the error message:</p>
+            <p className="text-slate-300 mb-6">The application crashed. Error details:</p>
             <pre className="bg-slate-900 p-4 rounded-lg text-red-300 overflow-x-auto text-sm font-mono text-left">
               {this.state.error?.toString()}
             </pre>
-            <p className="mt-6 text-slate-400 text-sm">
-              Please check your browser console (F12) for more details.
-            </p>
             <button 
               onClick={() => window.location.reload()}
               className="mt-6 px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-medium transition-colors"
@@ -58,7 +50,6 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       );
     }
 
-    // Fixed: Correctly using inherited 'props' from React.Component
     return this.props.children;
   }
 }
