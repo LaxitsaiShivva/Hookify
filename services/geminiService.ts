@@ -20,9 +20,12 @@ OUTPUT:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Fixed: Initializing GoogleGenAI directly with process.env.API_KEY as per the world-class guidelines.
-  // We assume process.env.API_KEY is pre-configured and valid.
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+  // Enforce the use of process.env.API_KEY directly for initialization as per Google GenAI SDK guidelines
+  if (!process.env.API_KEY) {
+    throw new Error("API Key is missing. Please check your Environment Variables.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   const prompt = `
@@ -39,7 +42,6 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
   `;
 
   try {
-    // Fixed: Using 'gemini-3-pro-preview' for creative copywriting and complex strategy reasoning.
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
@@ -69,7 +71,6 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
       },
     });
 
-    // Fixed: Accessing response.text directly (not a function call) as per the SDK documentation.
     const text = response.text;
     if (!text) throw new Error("Empty response from AI.");
     return JSON.parse(text) as HookResponse;
@@ -77,7 +78,6 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     
-    // Graceful error handling for service availability issues.
     if (error.message?.includes("503") || error.message?.includes("overloaded")) {
       throw new Error("Google's servers are currently busy. Please wait 10 seconds and try again.");
     }

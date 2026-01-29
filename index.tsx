@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
@@ -12,9 +12,8 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed: Using property initializers and explicit React.Component inheritance to resolve state/props access errors
+// Fixed inheritance by explicitly using React.Component and property initializers to resolve errors where 'state' and 'props' were not found.
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Using property initializer for state
   state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -29,13 +28,12 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
-    // Correctly accessing state and props from the Component instance
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
           <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-8 max-w-2xl">
             <h1 className="text-3xl font-bold text-red-400 mb-4">Something went wrong</h1>
-            <p className="text-slate-300 mb-6">The application crashed. Error details:</p>
+            <p className="text-slate-300 mb-6">The application encountered a build or runtime error:</p>
             <pre className="bg-slate-900 p-4 rounded-lg text-red-300 overflow-x-auto text-sm font-mono text-left">
               {this.state.error?.toString()}
             </pre>
