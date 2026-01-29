@@ -9,8 +9,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // This ensures process.env.API_KEY is replaced by the actual key during the build
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // This ensures process.env.API_KEY is replaced by the actual key during the build.
+      // We check for both 'API_KEY' and 'GEMINI_API_KEY' (which you used in Vercel).
+      'process.env.API_KEY': JSON.stringify(env.API_KEY || env.GEMINI_API_KEY),
     },
   };
 });

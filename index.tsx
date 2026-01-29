@@ -13,9 +13,9 @@ interface ErrorBoundaryState {
 }
 
 // Error Boundary to catch crashes and show a helpful message
-// Fixed: Explicitly using Component from 'react' to ensure proper inheritance of 'state' and 'props'
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Fixed: Explicitly initialize state as a class field to resolve property existence errors in TypeScript
+// Fixed: Using React.Component explicitly to ensure proper inheritance and recognition of 'state' and 'props'
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // Explicitly initialize state to resolve potential property existence errors
   public state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   render() {
-    // Fixed: 'state' is now correctly recognized via standard Component inheritance
+    // Correctly using inherited 'state'
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
@@ -58,7 +58,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       );
     }
 
-    // Fixed: 'props' is now correctly recognized via standard Component inheritance
+    // Fixed: Correctly using inherited 'props' from React.Component
     return this.props.children;
   }
 }
