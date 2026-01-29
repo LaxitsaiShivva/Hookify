@@ -12,8 +12,9 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed inheritance by explicitly using React.Component and property initializers to resolve errors where 'state' and 'props' were not found.
+// Fixed ErrorBoundary by extending React.Component and using property initializers to ensure state and props are correctly inherited and typed
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  // Using property initializer for state to avoid construction issues in some TS environments
   state: ErrorBoundaryState = {
     hasError: false,
     error: null
@@ -28,6 +29,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
+    // Correctly accessing state inherited from React.Component
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">
@@ -48,6 +50,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
       );
     }
 
+    // Correctly accessing props inherited from React.Component
     return this.props.children;
   }
 }

@@ -20,12 +20,16 @@ OUTPUT:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Enforce the use of process.env.API_KEY directly for initialization as per Google GenAI SDK guidelines
-  if (!process.env.API_KEY) {
-    throw new Error("API Key is missing. Please check your Environment Variables.");
+  // Use the API key directly from process.env.API_KEY as per guidelines.
+  // The value is injected at build time via vite.config.ts define block.
+  const apiKey = process.env.API_KEY;
+
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please ensure your configuration is correct.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Creating a new instance right before the call as per guidelines.
+  const ai = new GoogleGenAI({ apiKey });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   const prompt = `
@@ -71,6 +75,7 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
       },
     });
 
+    // Directly access the .text property of GenerateContentResponse as per guidelines.
     const text = response.text;
     if (!text) throw new Error("Empty response from AI.");
     return JSON.parse(text) as HookResponse;
@@ -78,6 +83,7 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
   } catch (error: any) {
     console.error("Gemini API Error:", error);
     
+    // Graceful error handling for busy servers (503 Service Unavailable)
     if (error.message?.includes("503") || error.message?.includes("overloaded")) {
       throw new Error("Google's servers are currently busy. Please wait 10 seconds and try again.");
     }
