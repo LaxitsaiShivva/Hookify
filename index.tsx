@@ -1,4 +1,3 @@
-
 import React, { ErrorInfo, ReactNode } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -12,13 +11,16 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-// Fixed ErrorBoundary by extending React.Component and using property initializers to ensure state and props are correctly inherited and typed
+// Fixed ErrorBoundary by adding a constructor to ensure props and state are correctly inherited and recognized by TypeScript
 class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  // Using property initializer for state to avoid construction issues in some TS environments
-  state: ErrorBoundaryState = {
-    hasError: false,
-    error: null
-  };
+  // Initializing state in the constructor to ensure it is properly linked to the React Component instance
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = {
+      hasError: false,
+      error: null
+    };
+  }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
@@ -29,7 +31,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 
   render() {
-    // Correctly accessing state inherited from React.Component
+    // Accessing state inherited from React.Component
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 text-center">

@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { FormData, HookResponse, GeneratorMode } from '../types';
 
@@ -20,16 +19,8 @@ OUTPUT:
 `;
 
 export const generateHooks = async (data: FormData): Promise<HookResponse> => {
-  // Use the API key directly from process.env.API_KEY as per guidelines.
-  // The value is injected at build time via vite.config.ts define block.
-  const apiKey = process.env.API_KEY;
-
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please ensure your configuration is correct.");
-  }
-
-  // Creating a new instance right before the call as per guidelines.
-  const ai = new GoogleGenAI({ apiKey });
+  // Always initialize GoogleGenAI with process.env.API_KEY directly as per guidelines
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
   const isImprove = data.mode === GeneratorMode.IMPROVE;
   const prompt = `
@@ -47,7 +38,7 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
 
   try {
     const response = await ai.models.generateContent({
-      model: 'gemini-3-pro-preview',
+      model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -75,19 +66,38 @@ export const generateHooks = async (data: FormData): Promise<HookResponse> => {
       },
     });
 
-    // Directly access the .text property of GenerateContentResponse as per guidelines.
+    // Access the .text property directly as it is not a method
     const text = response.text;
     if (!text) throw new Error("Empty response from AI.");
     return JSON.parse(text) as HookResponse;
 
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini API Error Detail:", error);
     
-    // Graceful error handling for busy servers (503 Service Unavailable)
-    if (error.message?.includes("503") || error.message?.includes("overloaded")) {
-      throw new Error("Google's servers are currently busy. Please wait 10 seconds and try again.");
+    const errorMessage = error.message || "";
+    
+    // Check for Rate Limit / Quota Exhausted (429)
+    if (errorMessage.includes("429") || errorMessage.includes("RESOURCE_EXHAUSTED") || errorMessage.includes("quota")) {
+      throw new Error("You've reached the free daily limit for Gemini AI. Please wait about 30-60 seconds before trying again.");
     }
     
-    throw new Error(error.message || "Something went wrong with the generation.");
+    // Check for Server Overloaded (503)
+    if (errorMessage.includes("503") || errorMessage.toLowerCase().includes("overloaded")) {
+      throw new Error("Google's servers are currently busy. Please wait 10 seconds and try again.");
+    }
+
+    // Attempt to extract a clean message if it's trapped in a JSON string
+    try {
+      if (errorMessage.startsWith('{')) {
+        const parsed = JSON.parse(errorMessage);
+        if (parsed?.error?.message) {
+          throw new Error(parsed.error.message);
+        }
+      }
+    } catch (e) {
+      // If parsing fails, just use the original error message logic
+    }
+    
+    throw new Error("Something went wrong with the AI. Please try again in a moment.");
   }
 };

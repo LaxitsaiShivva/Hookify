@@ -28,11 +28,11 @@ export default function App() {
         setError("AI returned no results. Try making your topic more specific.");
       }
     } catch (err: any) {
+      // Final safety net: Ensure we don't display raw JSON blobs in the UI
       let message = err.message || "An unexpected error occurred.";
       
-      // Handle the common "Overloaded" error gracefully
-      if (message.includes("503") || message.toLowerCase().includes("overloaded")) {
-        message = "Google's AI is currently very busy. Please wait 10 seconds and try clicking Generate again.";
+      if (message.startsWith('{') || message.length > 200) {
+        message = "The AI service is temporarily unavailable or you have reached your free usage limit. Please try again in a minute.";
       }
       
       setError(message);
@@ -54,13 +54,15 @@ export default function App() {
           </section>
 
           {error && (
-            <div className="flex items-start gap-4 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 animate-in fade-in slide-in-from-top-4">
+            <div className="flex items-start gap-4 p-5 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-200 animate-in fade-in slide-in-from-top-4 max-w-full">
               <div className="p-2 bg-red-500/20 rounded-lg shrink-0">
                 <AlertCircle className="w-5 h-5" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 overflow-hidden">
                 <p className="font-bold text-lg">Wait a moment...</p>
-                <p className="text-slate-300 mt-1">{error}</p>
+                <p className="text-slate-300 mt-1 break-words">
+                  {error}
+                </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <button 
                     onClick={() => window.location.reload()}
@@ -84,7 +86,7 @@ export default function App() {
                   </div>
                 </div>
                 <h3 className="text-xl font-medium text-indigo-200">Crafting viral hooks...</h3>
-                <p className="text-slate-500 text-sm">This usually takes about 3-5 seconds</p>
+                <p className="text-slate-500 text-sm">This usually takes about 3 seconds</p>
               </div>
             )}
 
